@@ -144,8 +144,7 @@ def roll_spirit_root() -> dict:
         ("伪灵根·四属性", 20, {"修炼速度": 0.40, "突破难度": 1.4}),
         ("真灵根·三属性", 20, {"修炼速度": 0.55, "突破难度": 1.2}),
         ("真灵根·双属性", 18, {"修炼速度": 0.80, "突破难度": 1.0}),
-        ("真灵根·单属性", 12, {"修炼速度": 1.10, "突破难度": 0.85}),
-        ("天灵根", 3, {"修炼速度": 1.60, "突破难度": 0.60}),
+        ("天灵根", 12, {"修炼速度": 1.60, "突破难度": 0.60}),
         ("变异灵根", 4, {"修炼速度": 1.35, "突破难度": 0.70}),
         ("隐灵根", 3, {"修炼速度": 0.90, "突破难度": 1.1}),
         ("混沌灵根", 0.5, {"修炼速度": 1.80, "突破难度": 0.50}),
@@ -166,9 +165,6 @@ def roll_spirit_root() -> dict:
     elif name == "真灵根·双属性":
         elements = random.sample(FIVE_ELEMENTS, 2)
         affinity = {e: 3 for e in elements}
-    elif name == "真灵根·单属性":
-        elements = [random.choice(FIVE_ELEMENTS)]
-        affinity = {elements[0]: 5}
     elif name == "天灵根":
         elements = [random.choice(FIVE_ELEMENTS)]
         affinity = {elements[0]: 8}
