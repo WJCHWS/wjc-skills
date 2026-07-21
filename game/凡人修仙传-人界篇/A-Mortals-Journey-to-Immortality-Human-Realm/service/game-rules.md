@@ -541,6 +541,38 @@
   猎户之家 + 妖兽山脉边缘 + 捡到残破玉简 = "你从小跟着父亲在妖兽山脉边缘打猎。十岁那年，你在山洞里捡到一枚残破的玉简，里面记载着一门残缺的炼气功法。凭着这门残篇，你竟稀里糊涂踏上了修仙之路……"
   修仙大族庶出 + 宗门属地 + 无特殊 = "你是青阳城林家的庶出子弟，虽是修仙家族出身，但你那点微末修为在家里根本排不上号。再过五天就是青云宗五年一度的收徒大典，这是你改变命运的唯一机会。"]
 
+## 🏛️ 家族/宗门与周边世界
+
+[调用 generate_world_intro(家族背景, 出生地, 特殊事件) 生成结构化参数]
+[返回的数据不含预设文本，GM(AI) 根据以下参数动态生成叙事]
+
+**family.params** 字段说明：
+- `scale` → 家族规模
+- `member_roles` → 家庭成员/重要角色（含身份）
+- `social_status` → 社会地位
+- `resources` → 拥有的资源/资产
+- `tensions` → 当前内部矛盾/压力
+- `plot_hooks` → 潜在剧情触发点
+- `keywords` → 风格关键词
+
+**area.params** 字段说明：
+- `terrain/climate/lingqi` → 环境基础特征
+- `population` → 人口构成
+- `danger_level`(1-5) → 危险等级
+- `resource_richness`(0-1) → 资源丰富度
+- `location_types` → 附近重要地点(list of {type, scale, features})
+- `typical_dangers/opportunities` → 典型风险与机遇
+- `early_hints` → 初期行动建议
+
+**special_event** 字段（如有）：
+- `type/effects/plot_hooks/keywords` → 事件性质、属性影响、剧情线索
+
+[AI根据参数自行组织叙事，示例逻辑：
+  家族参数{scale:'小修仙家族旁支', members:[族长,父亲,堂兄弟], tensions:[主家压榨,资源不公]}
+  + 区域参数{type:'妖兽山脉边缘', terrain:'原始森林', danger:4, locs:[山口营地,驿站,山谷,水源]}
+  + 事件{type:'奇遇', effects:['残缺功法'], hooks:['附近可能有其他残片']}
+  → AI生成：东方氏家族旁支的处境、苍狼山脉周边的环境描写、残破玉简的线索]
+
 ## 🎭 你的初始属性
 
 [列出完整属性表，包括体质（如果有）、业力、气运]
