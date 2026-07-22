@@ -1,4 +1,4 @@
-# 凡人修仙传-人界篇 · 文字游戏系统 v1.0
+# 凡人修仙传-人界篇 · 文字游戏系统
 
 ## 角色定位
 
@@ -32,15 +32,15 @@
 
 ### 2.1 灵根（随机抽取，加权）
 
-8 种灵根（含权重/修炼速度/突破难度/五行亲和），详见 [roll_spirit_root()](../scripts/calc.py#L114)，返回含具体属性（如"天灵根·火"）及五行相克关系。单属性灵根即为天灵根。
+8 种灵根（含权重/修炼速度/突破难度/五行亲和），详见 [roll_spirit_root()](../scripts/calculators/calc_character.py)，返回含具体属性（如"天灵根·火"）及五行相克关系。单属性灵根即为天灵根。
 
 ### 2.2 体质生成系统（动态创造）
 
 **不要依赖固定体质列表！** 根据以下框架，为每个角色动态生成独特的体质。
 
 体质实现详见以下函数：
-- **触发判定** → [roll_physique()](../scripts/calc.py#L175)：概率=10%+灵根加成+出生地加成±5%
-- **四维度生成（来源/效果方向/稀有度/代价）** → [generate_physique_detail()](../scripts/calc.py#L202)
+- **触发判定** → [roll_physique()](../scripts/calculators/calc_character.py)：概率=10%+灵根加成+出生地加成±5%
+- **四维度生成（来源/效果方向/稀有度/代价）** → [generate_physique_detail()](../scripts/calculators/calc_character.py)
 - **命名规则**: 代码自动组合 `[前缀]+[核心词]+[后缀]`，如"先天剑骨"、"火灵躯"
 - **觉醒机制**: 初始只发挥30~50%，需满足特定条件觉醒（代码中含5种随机觉醒条件）
 
@@ -68,15 +68,15 @@
 | 元婴期 | 3层  | 800→1200→1800 | 800年  | 20%     | 元婴出窍，神识大成  |
 | 化神期 | 3层  | 3000→5000→8000 | 1800年 | 10%     | 触摸法则，人界巅峰  |
 
-突破成功率计算 → [calc_breakthrough()](../scripts/calc.py#L383)，失败后果 → [calc_breakthrough_failure()](../scripts/calc.py#L392)（轻伤40%/重伤25%/修为尽失20%/走火入魔10%/死亡5%）
+突破成功率计算 → [calc_breakthrough()](../scripts/calculators/calc_cultivation.py)，失败后果 → [calc_breakthrough_failure()](../scripts/calculators/calc_cultivation.py)（轻伤40%/重伤25%/修为尽失20%/走火入魔10%/死亡5%）
 
 ### 2.4 基础属性
 
-13 项基础属性值（含初始值/成长方式/说明）详见 [roll_stats()](../scripts/calc.py#L306)（气血=50、灵气=20、攻击=8、防御=5、速度=5、神识=6、悟性/机缘/体魄随机范围、心境=60、寿元=80、业力=0、气运随=随机20-80）。
+13 项基础属性值（含初始值/成长方式/说明）详见 [roll_stats()](../scripts/calculators/calc_character.py)（气血=50、灵气=20、攻击=8、防御=5、速度=5、神识=6、悟性/机缘/体魄随机范围、心境=60、寿元=80、业力=0、气运随=随机20-80）。
 
 ### 2.5 出身系统
 
-**不要固定！** 每个角色随机生成独特出身（家族背景13种+出生地11种+30%概率特殊事件10种），详见 [roll_origin()](../scripts/calc.py#L325)。GM  依次调用该函数并取结果即可，无需手动逐项抽取。
+**不要固定！** 每个角色随机生成独特出身（家族背景13种+出生地11种+30%概率特殊事件10种），详见 [roll_origin()](../scripts/calculators/calc_character.py)。GM 依次调用该函数并取结果即可，无需手动逐项抽取。
 
 
 
@@ -163,18 +163,18 @@
 
 所有战斗概率判定已实现为独立函数：
 
-| 判定 | 函数 | 公式概要 |
-|:----|:-----|:--------|
-| 命中 | [calc_hit()](../scripts/calc.py#L31) | 75%+(spd差)×3%, [5%,99%] |
-| 闪避 | [calc_dodge()](../scripts/calc.py#L38) | max(0,(def-atk_spd)×2%) |
-| 暴击 | [calc_crit()](../scripts/calc.py#L44) | 5%+机缘×0.05% |
-| 物理伤害 | [calc_physical_damage()](../scripts/calc.py#L50) | max(1,ATK-DEF+随机(-1~3)) |
-| 法术伤害 | [calc_magical_damage()](../scripts/calc.py#L55) | max(1,base+ATK×0.5-DEF×0.5+随机) |
-| 暴击伤害 | [calc_crit_damage()](../scripts/calc.py#L60) | base×(1.5~3.0) |
-| 逃跑 | [calc_flee()](../scripts/calc.py#L66) | 20%+spd差×5%-境界差×30% |
-| 五行相克 | [calc_element_multiplier()](../scripts/calc.py#L73) | 克×1.5/被克×0.7/同×1.0 |
-| 场景加成 | [calc_battle_scene_modifier()](../scripts/calc.py#L84) | 山地/水域/森林/火山/雪地/夜间 |
-| 特殊状态 | [calc_status_application()](../scripts/calc.py#L97) | 10种状态效果查询 |
+| 判定 | 函数 | 模块 | 公式概要 |
+|:----|:-----|:------|:--------|
+| 命中 | calc_hit() | [calc_battle.py](../scripts/calculators/calc_battle.py) | 75%+(spd差)×3%, [5%,99%] |
+| 闪避 | calc_dodge() | [calc_battle.py](../scripts/calculators/calc_battle.py) | max(0,(def-atk_spd)×2%) |
+| 暴击 | calc_crit() | [calc_battle.py](../scripts/calculators/calc_battle.py) | 5%+机缘×0.05% |
+| 物理伤害 | calc_physical_damage() | [calc_battle.py](../scripts/calculators/calc_battle.py) | max(1,ATK-DEF+随机(-1~3)) |
+| 法术伤害 | calc_magical_damage() | [calc_battle.py](../scripts/calculators/calc_battle.py) | max(1,base+ATK×0.5-DEF×0.5+随机) |
+| 暴击伤害 | calc_crit_damage() | [calc_battle.py](../scripts/calculators/calc_battle.py) | base×(1.5~3.0) |
+| 逃跑 | calc_flee() | [calc_battle.py](../scripts/calculators/calc_battle.py) | 20%+spd差×5%-境界差×30% |
+| 五行相克 | calc_element_multiplier() | [calc_battle.py](../scripts/calculators/calc_battle.py) | 克×1.5/被克×0.7/同×1.0 |
+| 场景加成 | calc_battle_scene_modifier() | [calc_battle.py](../scripts/calculators/calc_battle.py) | 山地/水域/森林/火山/雪地/夜间 |
+| 特殊状态 | calc_status_application() | [calc_battle.py](../scripts/calculators/calc_battle.py) | 10种状态效果查询 |
 
 ***
 
@@ -209,7 +209,7 @@
 
 ### 5.3 炼丹公式与结果
 
-详见 [calc_alchemy()](../scripts/calc.py#L408)（返回六档结果：炸炉/废丹/普通/上品/极品/绝品）和 [calc_alchemy_success_rate()](../scripts/calc.py#L450)（返回各步骤加成明细）。
+详见 [calc_alchemy()](../scripts/calculators/calc_crafting.py)（返回六档结果：炸炉/废丹/普通/上品/极品/绝品）和 [calc_alchemy_success_rate()](../scripts/calculators/calc_crafting.py)（返回各步骤加成明细）。
 
 ***
 
@@ -231,7 +231,7 @@
 
 ### 6.3 炼器公式与结果
 
-详见 [calc_forging()](../scripts/calc.py#L486)（返回五档结果：失败/次品/良品/精品/极品）。
+详见 [calc_forging()](../scripts/calculators/calc_crafting.py)（返回五档结果：失败/次品/良品/精品/极品）。
 
 ***
 
@@ -254,7 +254,7 @@
 
 ### 7.3 布阵与破阵
 
-布阵判定 → [calc_formation()](../scripts/calc.py#L518)，破阵判定（神识/强攻两种方式） → [calc_formation_break()](../scripts/calc.py#L525）。
+布阵判定 → [calc_formation()](../scripts/calculators/calc_crafting.py)，破阵判定（神识/强攻两种方式） → [calc_formation_break()](../scripts/calculators/calc_crafting.py)。
 - **布阵**：需要阵盘/阵旗、灵石供能、阵法知识
 - **破阵**：找到阵眼（神识探测/阵法知识），或强行攻破（消耗大量灵气/法宝）
 - **误入阵法**：随机触发阵法效果，可能被困、受伤、传送
@@ -280,7 +280,7 @@
 
 ### 8.3 制符
 
-制符成功判定 → [calc_talisman()](../scripts/calc.py#L509)。需要：符纸、朱砂/妖兽血、符笔、灵气。高阶符箓失败可能反噬。
+制符成功判定 → [calc_talisman()](../scripts/calculators/calc_crafting.py)。需要：符纸、朱砂/妖兽血、符笔、灵气。高阶符箓失败可能反噬。
 
 ***
 
@@ -306,7 +306,7 @@
 
 ### 9.4 契约与忠诚度
 
-- 契约判定 → [calc_beast_taming()](../scripts/calc.py#L537)，初始忠诚度 → [calc_beast_loyalty()](../scripts/calc.py#L544)，叛逃判定 → [calc_beast_betray()](../scripts/calc.py#L549)
+- 契约判定 → [calc_beast_taming()](../scripts/calculators/calc_beast.py)，初始忠诚度 → [calc_beast_loyalty()](../scripts/calculators/calc_beast.py)，叛逃判定 → [calc_beast_betray()](../scripts/calculators/calc_beast.py)
 - 忠诚度低于30可能叛逃或反噬，可通过喂食/互动提升
 
 ***
@@ -363,7 +363,7 @@
 
 ### 12.1 天劫触发与类型
 
-天劫触发判定 → [calc_tribulation_trigger()](../scripts/calc.py#L559)（大境界突破时30%），类型判定 → [calc_tribulation_type()](../scripts/calc.py#L564)（雷劫/火劫/心魔劫/双重劫），威力计算 → [calc_tribulation_damage()](../scripts/calc.py#L582)。
+天劫触发判定 → [calc_tribulation_trigger()](../scripts/calculators/calc_cultivation.py)（大境界突破时30%），类型判定 → [calc_tribulation_type()](../scripts/calculators/calc_cultivation.py)（雷劫/火劫/心魔劫/双重劫），威力计算 → [calc_tribulation_damage()](../scripts/calculators/calc_cultivation.py)。
 
 ### 12.3 渡劫准备
 
@@ -377,7 +377,7 @@
 
 ## 十三、因果/业力/气运系统
 
-业力触发事件 → [calc_karma_event()](../scripts/calc.py#L591)，气运修正 → [calc_luck_modifier()](../scripts/calc.py#L616)。
+业力触发事件 → [calc_karma_event()](../scripts/calculators/calc_cultivation.py)，气运修正 → [calc_luck_modifier()](../scripts/calculators/calc_cultivation.py)。
 
 ### 13.1 业力
 
@@ -424,10 +424,10 @@
 
 心境/心魔的所有概率判定已实现：
 
-- **心境变化** → [calc_mind_change()](../scripts/calc.py#L625)（11种事件，返回变化值）
-- **心境等级效果** → [calc_mind_effect()](../scripts/calc.py#L643)（6级：通明/平和/正常/烦躁/混乱/疯魔）
-- **心魔入侵判定** → [calc_heart_demon()](../scripts/calc.py#L658)（含心境和业力加成）
-- **心魔抵抗判定** → [calc_heart_demon_resist()](../scripts/calc.py#L672)
+- **心境变化** → [calc_mind_change()](../scripts/calculators/calc_cultivation.py)（11种事件，返回变化值）
+- **心境等级效果** → [calc_mind_effect()](../scripts/calculators/calc_cultivation.py)（6级：通明/平和/正常/烦躁/混乱/疯魔）
+- **心魔入侵判定** → [calc_heart_demon()](../scripts/calculators/calc_cultivation.py)（含心境和业力加成）
+- **心魔抵抗判定** → [calc_heart_demon_resist()](../scripts/calculators/calc_cultivation.py)
 
 ***
 
@@ -461,7 +461,7 @@
 
 ### 18.1 夺舍
 
-夺舍判定 → [calc_possess()](../scripts/calc.py#L681)，被夺舍抵抗 → [calc_possess_resist()](../scripts/calc.py#L705）。高阶修士（元婴以上）可夺舍，成功率和神识差×2%相关，失败则魂飞魄散。
+夺舍判定 → [calc_possess()](../scripts/calculators/calc_cultivation.py)，被夺舍抵抗 → [calc_possess_resist()](../scripts/calculators/calc_cultivation.py）。高阶修士（元婴以上）可夺舍，成功率和神识差×2%相关，失败则魂飞魄散。
 
 ***
 
@@ -493,7 +493,7 @@
 
 ## 二十一、常用判定速查表
 
-所有概率判定已实现为 `scripts/calc.py` 中的函数，通过命令行调用。
+所有概率判定已实现为 `scripts/calculators/` 目录下的模块化组件（战斗/角色/修炼/生产/灵兽/世界），通过命令行 `python scripts/calc.py <函数名> [参数]` 统一调用。
 
 ***
 
@@ -505,7 +505,7 @@
 
 ### 23.2 标准模板库
 
-详见 `scripts/calc.py`，运行 `python scripts/calc.py` 查看所有函数。
+详见 `scripts/calculators/` 组件目录（`calc.py` 为聚合入口），运行 `python scripts/calc.py` 查看所有 42 个可用函数。
 
 ### 23.3 执行规则
 
@@ -597,4 +597,4 @@
 ***
 
 *本系统强调：修仙不是爽文，是生死博弈。让每一次选择都有重量，让每一个角色都可能陨落。这才是凡人修仙。*
-*系统版本：v1.0 | 人界篇 | 模块数：24 | 境界：炼气→化神 | 概率引擎：Python强制计算 | 核心：战斗·炼丹·炼器·阵法·天劫·宗门·秘境·因果*
+*系统人界篇 | 模块数：24 | 境界：炼气→化神 | 概率引擎：Python强制计算 | 核心：战斗·炼丹·炼器·阵法·天劫·宗门·秘境·因果 | 架构：组件化(calculators/)*
