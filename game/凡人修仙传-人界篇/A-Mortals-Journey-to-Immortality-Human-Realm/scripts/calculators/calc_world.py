@@ -1,23 +1,406 @@
 # 凡人修仙传-人界篇 · 概率计算引擎 · 世界/家族介绍
 # 仅返回类型标记，叙事由AI生成
+# 每个类型标记携带结构化参数（家族规模/角色/矛盾/环境/灵气等）供AI展开叙事
+
+
+# ── 家族类型 → 结构化参数映射 ──────────────────────────────────
+_FAMILY_PARAMS = {
+    "孤儿/弃婴": {
+        "scale": "单人",
+        "member_roles": [],
+        "social_status": "底层·无依无靠",
+        "resources": {"财富": 0, "人脉": 0},
+        "tensions": "生存压力·来历成谜",
+        "plot_hooks": ["身世之谜", "流浪机缘"],
+        "keywords": ["孤独", "神秘", "自由"],
+    },
+    "贫苦农家": {
+        "scale": "小户(3-5人)",
+        "member_roles": [("父母", "务农"), ("兄弟姐妹", "帮工")],
+        "social_status": "凡人底层",
+        "resources": {"财富": 0, "田地": "薄田几亩", "人脉": 1},
+        "tensions": "温饱压力·苛捐杂税",
+        "plot_hooks": ["被强征", "旱灾逃亡", "卖身入宗"],
+        "keywords": ["质朴", "坚韧", "穷困"],
+    },
+    "猎户之家": {
+        "scale": "小户(3-4人)",
+        "member_roles": [("父亲", "猎人"), ("母亲", "家务/采集")],
+        "social_status": "凡人底层·有一技之长",
+        "resources": {"财富": 1, "工具": "弓箭/陷阱", "人脉": 1},
+        "tensions": "猎物减少·山林危险",
+        "plot_hooks": ["山林发现遗迹", "遭遇妖兽", "猎户传承"],
+        "keywords": ["矫健", "山林", "野性"],
+    },
+    "渔/樵民家": {
+        "scale": "小户(3-5人)",
+        "member_roles": [("父亲", "渔夫/樵夫"), ("母亲", "家务")],
+        "social_status": "凡人底层",
+        "resources": {"财富": 0, "技能": "渔/樵技艺", "人脉": 1},
+        "tensions": "天灾影响生计",
+        "plot_hooks": ["水怪作乱", "古树有灵", "江中浮宝"],
+        "keywords": ["亲水", "隐秘水道", "山林路径"],
+    },
+    "商贾之家": {
+        "scale": "中等商户(5-10人)",
+        "member_roles": [("父母", "经营店铺"), ("账房/伙计", "帮工")],
+        "social_status": "凡人中产",
+        "resources": {"财富": 50, "店铺": "一间", "人脉": 2},
+        "tensions": "竞争·官商勾结·行商风险",
+        "plot_hooks": ["商队遇劫", "发现灵材商机", "被修士勒索"],
+        "keywords": ["精明", "市井", "人脉广"],
+    },
+    "书香门第": {
+        "scale": "小户(3-5人)·有仆从",
+        "member_roles": [("父亲", "教书先生/小吏"), ("母亲", "持家")],
+        "social_status": "凡人中产·清贵",
+        "resources": {"财富": 20, "藏书": "数百卷", "人脉": 2},
+        "tensions": "科举压力·家道中落",
+        "plot_hooks": ["先祖遗留古籍", "得罪权贵", "弃文修仙"],
+        "keywords": ["文雅", "聪慧", "清贫自守"],
+    },
+    "没落贵族": {
+        "scale": "残余小族(3-6人)",
+        "member_roles": [("长辈", "守旧贵族"), ("旁支亲族", "依附")],
+        "social_status": "昔贵今贫·有名无实",
+        "resources": {"财富": 30, "祖宅": "老旧大宅", "人脉": 2, "祖传物品": True},
+        "tensions": "变卖家产·被新贵欺压",
+        "plot_hooks": ["祖传秘密", "复兴使命", "仇家上门"],
+        "keywords": ["底蕴", "骄傲", "衰落"],
+    },
+    "武林世家": {
+        "scale": "小家族(10-30人)",
+        "member_roles": [("家主", "武林高手"), ("族中子弟", "习武"), ("客卿", "供奉")],
+        "social_status": "凡人上流·江湖地位",
+        "resources": {"财富": 20, "武学传承": True, "兵器库": "凡器若干", "人脉": 3},
+        "tensions": "江湖仇杀·门派争斗",
+        "plot_hooks": ["仇家寻仇", "争夺家主之位", "武学秘籍"],
+        "keywords": ["豪爽", "尚武", "恩怨分明"],
+    },
+    "江湖郎中/药师": {
+        "scale": "小户(2-4人)",
+        "member_roles": [("师父", "游医/药师"), ("学徒", "帮忙/学艺")],
+        "social_status": "凡人中下·受人尊敬",
+        "resources": {"财富": 10, "药箱": True, "医书": "若干", "人脉": 2},
+        "tensions": "药材难寻·疑难杂症",
+        "plot_hooks": ["奇病求医", "灵草现世", "被求救人牵连"],
+        "keywords": ["仁心", "博识", "漂泊"],
+    },
+    "修仙小族(旁支)": {
+        "scale": "小修仙家族(20-50人)",
+        "member_roles": [("族长", "炼气后期"), ("执事", "族务管理"), ("旁支本家", "修炼")],
+        "social_status": "修仙界底层势力",
+        "resources": {"财富": 50, "灵田": "少量", "功法": "基础功法", "人脉": 3},
+        "tensions": "资源紧缺·被大族压制·旁支受歧视",
+        "plot_hooks": ["灵脉之争", "旁支逆袭", "[家族]依附大宗"],
+        "keywords": ["挣扎", "野心", "团结"],
+    },
+    "修仙大族(嫡系)": {
+        "scale": "大修仙家族(100-500人)",
+        "member_roles": [
+            ("族长", "筑基期"),
+            ("长老会", "炼气大圆满"),
+            ("嫡系子弟", "重点培养"),
+            ("客卿长老", "外姓修士"),
+        ],
+        "social_status": "修仙界中上层",
+        "resources": {"财富": 200, "灵脉": True, "功法": "黄阶", "丹药": "定期供应", "人脉": 5},
+        "tensions": "嫡庶之争·族内权力倾轧·外部觊觎",
+        "plot_hooks": ["家主继承之争", "被敌对家族暗算", "秘境名额内定"],
+        "keywords": ["优越", "权谋", "资源丰厚"],
+    },
+    "修仙大族(庶出)": {
+        "scale": "大修仙家族(庶出分支)",
+        "member_roles": [("自己", "庶出子弟"), ("嫡系", "掌权者"), ("生母/侍妾", "地位低下")],
+        "social_status": "族中边缘·名不副实",
+        "resources": {"财富": 30, "功法": "基础功法", "人脉": 0},
+        "tensions": "被嫡系压制·资源克扣·身份尴尬",
+        "plot_hooks": ["证明自己", "脱离家族", "嫡系迫害"],
+        "keywords": ["隐忍", "不甘", "逆境"],
+    },
+    "被捡养/收养": {
+        "scale": "收养家庭(2-3人)",
+        "member_roles": [("养父母", "身份成谜")],
+        "social_status": "不定(取决于收养家庭)",
+        "resources": {"财富": 0, "线索": "收养信物"},
+        "tensions": "身世之谜·寄人篱下",
+        "plot_hooks": ["养父母来历", "亲生家族寻来", "信物指向秘境"],
+        "keywords": ["身世", "羁绊", "寻找"],
+    },
+}
+
+# ── 出生地类型 → 结构化参数映射 ────────────────────────────────
+_AREA_PARAMS = {
+    "偏远山村": {
+        "terrain": "山地/丘陵",
+        "climate": "四季分明",
+        "lingqi": "稀薄(0.3/1.0)",
+        "population": "数十户凡人",
+        "danger_level": 1,
+        "resource_richness": 0.1,
+        "location_types": [
+            ("山林", "小", ["野兽", "野果"]),
+            ("溪流", "小", ["水源", "鱼虾"]),
+            ("邻村", "小", ["集市"]),
+        ],
+    },
+    "凡人城镇": {
+        "terrain": "平原/河谷",
+        "climate": "宜人",
+        "lingqi": "稀薄(0.2/1.0)",
+        "population": "数千至数万凡人",
+        "danger_level": 2,
+        "resource_richness": 0.3,
+        "location_types": [
+            ("集市", "中", ["商贩", "客栈", "铁匠铺"]),
+            ("官府", "小", ["治安", "税收"]),
+            ("黑市", "小", ["禁物交易"]),
+            ("码头/驿站", "小", ["交通"]),
+        ],
+    },
+    "修仙坊市附近": {
+        "terrain": "平地/灵脉支线",
+        "climate": "受阵法调节",
+        "lingqi": "中等(0.6/1.0)",
+        "population": "修士为主·散修聚集",
+        "danger_level": 3,
+        "resource_richness": 0.6,
+        "location_types": [
+            ("坊市", "中", ["灵材铺", "丹药阁", "法器行", "任务堂"]),
+            ("散修洞府群", "中", ["临时洞府", "交易"]),
+            ("灵田", "小", ["灵谷种植"]),
+        ],
+    },
+    "宗门属地村落": {
+        "terrain": "灵脉分支环绕",
+        "climate": "灵气温和",
+        "lingqi": "中等(0.7/1.0)",
+        "population": "附庸凡人和外门修士",
+        "danger_level": 1,
+        "resource_richness": 0.5,
+        "location_types": [
+            ("宗门山门", "大", ["收徒", "护山大阵"]),
+            ("外门区域", "中", ["任务殿", "演武场", "食堂"]),
+            ("灵药园", "中", ["灵草种植"]),
+        ],
+    },
+    "边境战区": {
+        "terrain": "荒原/破碎地貌",
+        "climate": "恶劣·灵气紊乱",
+        "lingqi": "稀薄且不稳定(0.2/1.0)",
+        "population": "修士军队·流民",
+        "danger_level": 5,
+        "resource_richness": 0.2,
+        "location_types": [
+            ("前线堡垒", "中", ["防御", "驻军"]),
+            ("战场遗迹", "大", ["遗落物品", "怨气"]),
+            ("流民营地", "小", ["情报", "黑市"]),
+        ],
+    },
+    "妖兽山脉边缘": {
+        "terrain": "密林/陡峭山岭",
+        "climate": "潮湿多变",
+        "lingqi": "局部浓郁(0.5/1.0)",
+        "population": "少数猎妖修士·妖兽",
+        "danger_level": 4,
+        "resource_richness": 0.7,
+        "location_types": [
+            ("山脉入口", "中", ["猎妖小队集结"]),
+            ("灵草丛生地", "小", ["随机灵草"]),
+            ("妖兽巢穴", "不定", ["妖兽材料"]),
+            ("猎妖者营地", "小", ["补给", "情报"]),
+        ],
+    },
+    "古战场遗址旁": {
+        "terrain": "凹陷盆地/碎裂大地",
+        "climate": "阴冷·常年雾霭",
+        "lingqi": "稀薄·夹杂煞气(0.3/1.0)",
+        "population": "探宝修士·亡魂",
+        "danger_level": 4,
+        "resource_richness": 0.4,
+        "location_types": [
+            ("遗址核心", "中", ["残缺法器", "禁制"]),
+            ("阴气汇聚处", "小", ["鬼物", "魂晶"]),
+            ("探宝者营地", "小", ["交易", "情报"]),
+        ],
+    },
+    "灵气枯竭之地": {
+        "terrain": "荒漠/焦土",
+        "climate": "极端干旱或严寒",
+        "lingqi": "近乎为零(0.05/1.0)",
+        "population": "稀少·坚韧求生者",
+        "danger_level": 3,
+        "resource_richness": 0.05,
+        "location_types": [
+            ("绿洲/避难所", "小", ["补给", "休息"]),
+            ("枯竭灵脉", "小", ["残余灵石"]),
+            ("遗迹残骸", "小", ["上古遗物"]),
+        ],
+    },
+    "灵气浓郁之地": {
+        "terrain": "福地洞天地貌",
+        "climate": "四季如春·云雾缭绕",
+        "lingqi": "浓郁(0.9/1.0)",
+        "population": "强大势力占据",
+        "danger_level": 3,
+        "resource_richness": 0.9,
+        "location_types": [
+            ("灵脉眼", "中", ["极品灵石", "修炼圣地"]),
+            ("灵药谷", "中", ["稀有灵草"]),
+            ("前辈洞府", "小", ["传承", "禁制"]),
+            ("势力驻地", "中", ["宗门/家族"]),
+        ],
+    },
+    "绝境险地": {
+        "terrain": "火山/冰原/深渊/雷谷",
+        "climate": "极端恶劣",
+        "lingqi": "不稳定·属性偏激(0.4/1.0)",
+        "population": "几乎无人",
+        "danger_level": 5,
+        "resource_richness": 0.6,
+        "location_types": [
+            ("险地入口", "小", ["天然屏障"]),
+            ("极端环境中心", "小", ["特殊灵物"]),
+            ("前人遗骸", "小", ["遗物"]),
+        ],
+    },
+    "流浪/无定所": {
+        "terrain": "不定",
+        "climate": "不定",
+        "lingqi": "随地点变化",
+        "population": "独自一人·随遇而安",
+        "danger_level": 3,
+        "resource_richness": 0.2,
+        "location_types": [
+            ("临时歇脚处", "不定", ["随机"]),
+            ("下一个目的地", "不定", ["未知"]),
+        ],
+    },
+}
+
+# ── 特殊事件类型 → 结构化参数映射 ──────────────────────────────
+_EVENT_PARAMS = {
+    "出生时天降异象": {
+        "event_type": "天地异象",
+        "effect": "气运+20",
+        "plot_clues": ["天象预示", "势力关注", "命格非凡"],
+        "keywords": ["天命", "瞩目", "非凡开端"],
+    },
+    "襁褓中放于宗门门口": {
+        "event_type": "遗弃·留信物",
+        "effect": "物品:信物/玉佩",
+        "plot_clues": ["身世追查", "信物来源", "宗门恩怨"],
+        "keywords": ["身世之迷", "被选择", "宗门因果"],
+    },
+    "幼年大病不死": {
+        "event_type": "死里逃生",
+        "effect": "毒抗+10%·寿元-5",
+        "plot_clues": ["病源之谜", "体质异变", "医者介入"],
+        "keywords": ["坚韧", "后遗症", "天命不绝"],
+    },
+    "被路过高人点拨": {
+        "event_type": "机缘点拨",
+        "effect": "悟性+10·心境+5",
+        "plot_clues": ["高人身份", "点拨真意", "后续考验"],
+        "keywords": ["缘分", "明悟", "仙缘初显"],
+    },
+    "捡到残破玉简": {
+        "event_type": "机缘传承",
+        "effect": "物品:残缺功法/法术",
+        "plot_clues": ["玉简来历", "功法上限", "残篇补全线索"],
+        "keywords": ["奇遇", "修炼根基", "残缺"],
+    },
+    "家族被灭门": {
+        "event_type": "惨祸·仇恨",
+        "effect": "财富+100·心境-20·业力+5",
+        "plot_clues": ["灭门真凶", "幸存遗产", "复仇线"],
+        "keywords": ["血仇", "逃亡", "复仇"],
+    },
+    "被当成炉鼎培养": {
+        "event_type": "悲惨培养",
+        "effect": "灵气+30%·寿元-20",
+        "plot_clues": ["炉鼎主人", "逃脱始末", "反噬契机"],
+        "keywords": ["屈辱", "底子扎实", "挣脱"],
+    },
+    "出生在古墓/遗迹中": {
+        "event_type": "奇异出生地",
+        "effect": "物品:古物·体质异变概率+",
+        "plot_clues": ["遗迹来历", "为何出生于此", "守护者"],
+        "keywords": ["诡异", "古墓", "身世成谜"],
+    },
+    "被妖兽抚养长大": {
+        "event_type": "非人抚养",
+        "effect": "体魄+15·妖族亲和+",
+        "plot_clues": ["妖兽身份", "回归人类社会冲突", "兽性本能"],
+        "keywords": ["野性", "异类", "妖兽羁绊"],
+    },
+    "天降灵物": {
+        "event_type": "天降机缘",
+        "effect": "物品:灵物/灵种",
+        "plot_clues": ["灵物来源", "他人觊觎", "培养成长"],
+        "keywords": ["天赐", "宝物", "怀璧之罪"],
+    },
+    "目睹仙人斗法": {
+        "event_type": "震撼见识",
+        "effect": "悟性+5·仙道向往+",
+        "plot_clues": ["斗法修士身份", "法术观摩启发", "寻求仙道"],
+        "keywords": ["震撼", "启蒙", "向往"],
+    },
+    "被修士渡入仙途": {
+        "event_type": "引路人",
+        "effect": "初始修为:炼气一层·人脉+1",
+        "plot_clues": ["引路人目的", "师承关系", "引路人的敌人"],
+        "keywords": ["引领", "感恩", "因果"],
+    },
+    "家乡遭天灾灭村": {
+        "event_type": "天灾·幸存",
+        "effect": "心境-15·野外生存+",
+        "plot_clues": ["天灾异常", "幸存者去向", "重建/复仇"],
+        "keywords": ["幸存", "孤独", "天灾疑云"],
+    },
+    "天生阴阳眼": {
+        "event_type": "天赋异禀",
+        "effect": "神识+15·易招惹灵体",
+        "plot_clues": ["阴阳眼来源", "灵体纠缠", "通灵传承"],
+        "keywords": ["通灵", "异于常人", "阴阳界限"],
+    },
+}
+
+
+def _extract_event_name(special_event) -> str:
+    """从各种格式的特殊事件中提取事件名称"""
+    if not special_event:
+        return ""
+    if isinstance(special_event, str):
+        return special_event
+    if isinstance(special_event, (tuple, list)):
+        return str(special_event[0]) if special_event else ""
+    if isinstance(special_event, dict):
+        return special_event.get("name", "") or special_event.get("0", "")
+    return ""
 
 
 def generate_world_intro(
     family_name: str = "", birthplace: str = "", special_event=None
 ) -> dict:
-    """仅返回类型标记，所有叙事内容、人物关系、环境描写、姓氏等均由AI根据类型标记动态生成"""
+    """
+    仅返回类型标记，所有叙事内容、人物关系、环境描写、姓氏等均由AI根据类型标记动态生成。
 
-    evt_name = ""
-    if special_event:
-        if isinstance(special_event, str):
-            evt_name = special_event
-        elif isinstance(special_event, (tuple, list)):
-            evt_name = str(special_event[0]) if special_event else ""
-        elif isinstance(special_event, dict):
-            evt_name = special_event.get("name", "") or special_event.get("0", "")
+    返回结构：
+      - family: { type, params }       → 家族类型 + 结构化参数
+      - area:   { type, params }       → 出生地类型 + 结构化参数
+      - special_event: {...} | None    → 特殊事件结构化参数
+    """
+    evt_name = _extract_event_name(special_event)
 
     return {
-        "family_type": family_name,
-        "birthplace_type": birthplace,
-        "special_event_name": evt_name,
+        "family": {
+            "type": family_name,
+            "params": _FAMILY_PARAMS.get(family_name, _FAMILY_PARAMS.get("孤儿/弃婴", {})),
+        },
+        "area": {
+            "type": birthplace,
+            "params": _AREA_PARAMS.get(birthplace, _AREA_PARAMS.get("偏远山村", {})),
+        },
+        "special_event": _EVENT_PARAMS.get(evt_name) if evt_name else None,
     }
