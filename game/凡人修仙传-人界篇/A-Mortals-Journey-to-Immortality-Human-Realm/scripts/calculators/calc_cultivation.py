@@ -1,5 +1,9 @@
 # 凡人修仙传-人界篇 · 概率计算引擎 · 修炼体系
 # 包含: 突破§2.3 / 天劫§12 / 业力气运§13 / 心境心魔§15 / 夺舍§18 / 常用判定速查§21
+#
+# 本文件为概率计算框架。固定阈值（突破失败概率分段、心境等级等）为系统数值基础，
+# 但AI在叙事中可自由发挥——突破失败"走火入魔"的具体表现是什么？
+# 心魔入侵时看到的幻象是什么？这些都是AI的创造空间。
 
 import random
 from .calc_utils import clamp
@@ -27,7 +31,7 @@ def calc_breakthrough(base_rate: float, difficulty: float, bonuses: dict) -> tup
 
 
 def calc_breakthrough_failure() -> str:
-    """突破失败后果: 轻伤40%/重伤25%/修为尽失20%/走火入魔10%/死亡5%"""
+    """突破失败后果（返回标签，AI据此自由创造叙事细节）"""
     r = random.random()
     if r < 0.40:
         return "轻伤"
@@ -47,7 +51,7 @@ def calc_tribulation_trigger() -> bool:
 
 
 def calc_tribulation_type(karma: int = 0, fire_affinity: float = 0.0) -> str:
-    """天劫类型判定 §12.2"""
+    """天劫类型判定（返回标签，AI自由创造天劫的具体形态和表现）"""
     if karma < -50:
         return random.choices(["雷劫", "心魔劫", "双重劫"], weights=[0.20, 0.50, 0.30])[
             0
@@ -68,7 +72,7 @@ def calc_tribulation_damage(realm_tier: int, tribulation_type: str) -> int:
 
 # == 因果/业力/气运 §13 ==
 def calc_karma_event(karma: int) -> str:
-    """业力触发事件 §13.1: |karma|>50触发"""
+    """业力触发事件（返回方向标签，AI据此自由创造具体事件叙事）"""
     abs_karma = abs(karma)
     if abs_karma < 50:
         return "无事件"
@@ -101,7 +105,7 @@ def calc_luck_modifier(qi_yun: int) -> float:
 
 # == 心魔/心境 §15 ==
 def calc_mind_change(event_type: str) -> int:
-    """心境变化 §15.1: 返回变化值"""
+    """心境变化（返回数值变化，AI自由叙事描述心境波动的表现）"""
     changes = {
         "突破成功": random.randint(5, 10),
         "突破失败": random.randint(-15, -5),

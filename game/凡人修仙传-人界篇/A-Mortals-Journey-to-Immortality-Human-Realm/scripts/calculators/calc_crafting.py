@@ -1,4 +1,8 @@
 # 凡人修仙传-人界篇 · 概率计算引擎 · 生产技能（炼丹§5 / 炼器§6 / 制符§8 / 阵法§7）
+#
+# 本文件为概率计算框架。硬编码的品质加成（herb_bonuses/furnace_bonuses等）
+# 仅为默认参考值，AI可根据世界设定动态调整——例如某区域的"地火"可能比普通地火更强。
+# 丹药/法器/符箓/阵法的具体名称、效果、材料，均由AI根据角色环境和剧情创造。
 
 import random
 from .calc_utils import clamp
@@ -15,7 +19,7 @@ def calc_alchemy(
     aux: int = 0,
     phys_bonus: float = 0.0,
 ) -> str:
-    """炼丹结果 §5.3-5.4: base=10%+lv*4%+wu_xing*0.15%+phys, +herb/furnace/fire/year/aux, [1%,95%]"""
+    """炼丹结果（返回品质标签，AI据此创造具体的丹药名称和外观描述）"""
     base = 0.10 + level * 0.04 + wu_xing * 0.0015 + phys_bonus
 
     herb_bonuses = {"普通": 0, "灵草": 0.05, "珍稀": 0.10}
@@ -102,7 +106,7 @@ def calc_forging(
     fire: str = "地火",
     phys_bonus: float = 0.0,
 ) -> str:
-    """炼器结果 §6.3-6.4: base=15%+lv*3%+wu_xing*0.1%+phys, +material+fire"""
+    """炼器结果（返回品质标签，AI据此创造具体法器名称和外观描述）"""
     base = 0.15 + level * 0.03 + wu_xing * 0.001 + phys_bonus
     material_bonus = {"普通": 0, "灵材": 0.05, "珍稀": 0.12}
     fire_bonus = {"凡火": -0.10, "地火": 0, "灵火": 0.08, "异火": 0.15}
